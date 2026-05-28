@@ -1,0 +1,43 @@
+ <%- include('./includes/aiChat/header.ejs') -%>
+    <div class="chat-container">
+        <!-- هدر -->
+        <div class="chat-header">
+            <h2> دستیار هوشمند پشتیبانی</h2>
+            <div class="ai-status" id="aiStatus">
+                <span class="status-dot"></span>
+                <span>در حال اتصال...</span>
+            </div>
+        </div>
+
+        <!-- پیام‌ها -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-content">
+                    سلام!
+                    <br><br>
+                    من دستیار هوشمند پشتیبانی مخابرات هستم.
+                    <br>
+                    مشکل فنی خود را بفرمایید تا کمکتان کنم.
+                </div>
+                <div class="message-time">همین الان</div>
+            </div>
+        </div>
+
+        <!-- فرم ارسال پیام -->
+        <div class="chat-input-container">
+            <textarea 
+                id="userInput" 
+                placeholder="مشکل خود را بنویسید..." 
+                rows="1"
+            ></textarea>
+            <button id="sendBtn" onclick="sendMessage()">
+                <span>ارسال</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+ <%- include('./includes/aiChat/footer.ejs') -%>
+

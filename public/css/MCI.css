@@ -1,0 +1,210 @@
+/*  Variables & Base  */
+:root {
+  --primary: #a78bfa;
+  --primary-dark: #7c3aed;
+  --text: #1f1630;
+  --muted: #6d6283;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #fcfaff;
+  color: var(--text);
+  line-height: 1.6;
+}
+.nav-btn {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.container {
+  width: min(1200px, 90%);
+  margin: 0 auto;
+}
+
+/*  Header  */
+header {
+  padding: 30px 0;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+@font-face {
+  font-family:'MyCustomFonts' ;
+  src: url('../font/FORTE.TTF');
+}
+
+.logo-text {
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+   font-family: 'MyCustomFonts', sans-serif;
+
+}
+
+nav ul {
+  display: flex;
+  gap: 35px;
+  list-style: none;
+}
+
+nav ul li a {
+  font-weight: 1000;
+  font-size: 1.2rem;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+nav ul li a:hover {
+  color: var(--primary-dark);
+}
+
+/*  Hero Section  */
+.hero {
+  padding: 100px 0;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+h1 {
+  font-size: 4.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin-bottom: 30px;
+}
+
+
+
+.gradient-text {
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'MyCustomFonts',serif;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 1.3rem;
+  color: var(--muted);
+  margin-bottom: 50px;
+  max-width: 550px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 20px;
+}
+
+/*   Card  */
+
+
+.app-screen {
+  background: #f8f5ff;
+  border-radius: 30px;
+  padding: 30px;
+}
+
+.app-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.greeting h3 {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.greeting p {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+}
+
+.balance-card {
+  background: var(--primary-dark);
+  color: rgb(252, 252, 252);
+  padding: 25px;
+  border-radius: 25px;
+  margin: 20px 0;
+}
+
+.balance-card small {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+@font-face {
+  font-family:'MyFont' ;
+  src: url('../font/impact.ttf');
+}
+
+.balance-card h2 {
+  font-family: 'Myfont',serif;
+  font-size: 2.5rem;
+  margin-top: 3px;
+}
+
+.mini-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.mini-box {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.mini-box strong {
+  display: block;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.mini-box span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+

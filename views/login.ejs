@@ -1,0 +1,22 @@
+
+ <%- include('./includes/login/header.ejs') -%>
+ <section class="contact">
+    <div class="contact-wrapper">
+      <div class="contact-circle"></div>
+      <div class="contact-header"></div>
+      <div class="contact-form-wrapper">
+        <span class="material-symbols-rounded">sign in</span>
+        <h4>We are Here for help You</h4>
+        <p>Log in to track technical requests</p>
+        <form action="/check/login" method="post">
+          <input type="number" name="phone" placeholder="Phone" />
+          <input type="password" name="password" id="pass" placeholder="Password" />
+          <button type="submit">Sign in</button>
+        </form>
+        <p style="margin-top: 15px; font-size: 14px;">
+          Don't have an account? <a href="/register">Register</a>
+        </p>
+      </div>
+    </div>
+  </section>
+ <%- include('./includes/login/footer.ejs') -%>

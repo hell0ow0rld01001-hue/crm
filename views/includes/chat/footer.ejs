@@ -1,0 +1,26 @@
+
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('message-input');
+    const messagesDiv = document.getElementById('messages');
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const text = input.value.trim();
+      if (!text) return;
+
+      await fetch('/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      input.value = '';
+      location.reload();
+    });
+  </script>
+</body>
+</html>

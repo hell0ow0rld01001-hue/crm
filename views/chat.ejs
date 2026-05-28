@@ -1,0 +1,29 @@
+ <%- include('./includes/chat/header.ejs') -%>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>👤 support chat</h2>
+      <div class="user-info">
+        
+
+        <br>
+        <form action="/logout">
+          <button type="submit" class="EXIT">EXIT</button>
+        </form>
+        
+      </div>
+    </div>
+    <div class="messages" id="messages">
+      <% messages.forEach(msg => { %>
+        <div class="message <%= msg.userId === user.id ? 'mine' : 'other' %>">
+          <span class="name"><%= msg.userName %></span>
+          <p class="text"><%= msg.text %></p>
+          <span class="time"><%= new Date(msg.createdAt).getFullYear() %> / <%= new Date(msg.createdAt).getMonth()%> / <%= new Date(msg.createdAt).getDate() %></span>
+        </div>
+      <% }) %>
+    </div>
+    <form id="chat-form" class="chat-form">
+      <input type="text" id="message-input" placeholder="Write your message..." autocomplete="off">
+      <button type="submit">SEND</button>
+    </form>
+  </div>
+ <%- include('./includes/chat/footer.ejs') -%>

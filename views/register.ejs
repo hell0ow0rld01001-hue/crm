@@ -1,0 +1,24 @@
+ <%- include('./includes/register/header.ejs') -%>
+
+  <section class="contact">
+    <div class="contact-wrapper">
+      <div class="contact-circle"></div>
+      <div class="contact-header"></div>
+      <div class="contact-form-wrapper">
+        <span class="material-symbols-rounded">sign up</span>
+        <h4>Create Your Account</h4>
+        <p>Sign up to get started</p>
+        <form action="/check/register" method="post">
+          <input type="text" name="name" placeholder="Name" />
+          <input type="number" name="phone" placeholder="Phone" />
+          <input type="password" name="password" placeholder="Password" />
+          <input type="password" name="confirmPassword" placeholder="Confirm Password" />
+          <button type="submit">Register</button>
+        </form>
+        <p style="margin-top: 15px; font-size: 14px;">
+          Already have an account? <a href="/login">Login</a>
+        </p>
+      </div>
+    </div>
+  </section>
+ <%- include('./includes/register/footer.ejs') -%>
