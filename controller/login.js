@@ -28,7 +28,7 @@ const login = async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'wrong password' });
+      return res.redirect('/wrong-password');
     }
 
     req.session.user = {
