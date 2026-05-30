@@ -46,7 +46,7 @@ app.use(loginShow);
 app.use(registerShow);
 app.use(chatRoutes);
 app.use(logoutRoutes);
-app.use(aiChatRoutes);  // ← این رو ببر پایین
+app.use(aiChatRoutes); 
 
 //404
 app.use(fourcontroller.get404);

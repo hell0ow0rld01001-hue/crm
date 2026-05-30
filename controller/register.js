@@ -26,7 +26,8 @@ const register = async (req, res) => {
     await db.collection('users').insertOne({
       name,
       phone: hashedPhone,     
-      password: hashedPassword, 
+      password: hashedPassword,
+      role: 'user',
       createdAt: new Date()
     });
 

@@ -13,9 +13,16 @@
     "ignoreDeprecations": "6.0"
   },
   "include": [
-    "**/*"
+    "*.js",
+    "controller/**/*",
+    "routers/**/*",
+    "model/**/*",
+    "services/**/*",
+    "views/**/*",
+    "public/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/*.test.js"
   ]
 }

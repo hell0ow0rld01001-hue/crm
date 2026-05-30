@@ -1,0 +1,117 @@
+<%- include('./includes/chat/header.ejs') -%>
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>📊 تمام صحبت‌ها</h2>
+    <div class="user-info">
+      <p>سلام <strong><%= user.name %></strong> (پشتیبان)</p>
+      <form action="/logout" style="display:inline;">
+        <button type="submit" class="EXIT">EXIT</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- فهرست صحبت‌ها -->
+  <div class="conversations-list" style="display: flex; height: 500px;">
+    <!-- ستون سمت چپ: فهرست کاربران -->
+    <div style="width: 30%; border-right: 1px solid #ccc; overflow-y: auto;">
+      <div style="padding: 15px; background: #f5f5f5; font-weight: bold;">کاربران</div>
+      <div id="conversations"></div>
+    </div>
+
+    <!-- ستون سمت راست: پیام‌های صحبت -->
+    <div style="width: 70%; display: flex; flex-direction: column;">
+      <div class="messages" id="messages" style="flex: 1; overflow-y: auto; padding: 15px;">
+        <p style="text-align: center; color: #999;">صحبتی برای نمایش نیست</p>
+      </div>
+      <form id="chat-form" class="chat-form" style="border-top: 1px solid #ddd; padding: 15px;">
+        <input type="hidden" id="conversation-id">
+        <input type="text" id="message-input" placeholder="پیام خود را بنویسید..." autocomplete="off" style="flex: 1;">
+        <button type="submit">ارسال</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/template" id="messages-template"><%- JSON.stringify(messages) %></script>
+<script>
+  let conversations = {};
+  let currentConversationId = null;
+
+  // دریافت تمام صحبت‌ها و گروه‌بندی پیام‌ها
+  const messages = JSON.parse(document.getElementById('messages-template').textContent);
+  
+  messages.forEach(msg => {
+    if (!conversations[msg.conversationId]) {
+      conversations[msg.conversationId] = [];
+    }
+    conversations[msg.conversationId].push(msg);
+  });
+
+  // نمایش فهرست کاربران
+  function renderConversations() {
+    const convList = document.getElementById('conversations');
+    convList.innerHTML = '';
+    
+    for (const [convId, msgs] of Object.entries(conversations)) {
+      if (msgs.length > 0) {
+        const userName = msgs[0].userName;
+        const lastMsg = msgs[msgs.length - 1];
+        const button = document.createElement('div');
+        button.style.cssText = 'padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; hover-background: #f0f0f0;';
+        button.innerHTML = `
+          <strong>${userName}</strong>
+          <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">${lastMsg.text.substring(0, 40)}...</p>
+        `;
+        button.onclick = () => loadConversation(convId);
+        convList.appendChild(button);
+      }
+    }
+  }
+
+  // بارگذاری صحبت‌های یک کاربر
+  function loadConversation(convId) {
+    currentConversationId = convId;
+    document.getElementById('conversation-id').value = convId;
+    
+    const messageDiv = document.getElementById('messages');
+    messageDiv.innerHTML = '';
+    
+    const msgs = conversations[convId] || [];
+    msgs.forEach(msg => {
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${msg.userId === '${user.id}' ? 'mine' : 'other'}`;
+      messageEl.innerHTML = `
+        <span class="name">${msg.userName}</span>
+        <p class="text">${msg.text}</p>
+        <span class="time">${new Date(msg.createdAt).toLocaleDateString('fa-IR')}</span>
+      `;
+      messageDiv.appendChild(messageEl);
+    });
+    
+    messageDiv.scrollTop = messageDiv.scrollHeight;
+  }
+
+  renderConversations();
+
+  // ارسال پیام
+  document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = document.getElementById('message-input').value;
+    const conversationId = document.getElementById('conversation-id').value;
+
+    if (!text || !conversationId) return;
+
+    const response = await fetch('/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, conversationId })
+    });
+
+    if (response.ok) {
+      document.getElementById('message-input').value = '';
+      location.reload();
+    }
+  });
+</script>
+
+<%- include('./includes/chat/footer.ejs') -%>
