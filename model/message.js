@@ -7,6 +7,7 @@ const MessageModel = {
       conversationId: message.conversationId,
       userId: message.userId,
       userName: message.userName,
+      role: message.role,
       text: message.text,
       createdAt: new Date()
     });

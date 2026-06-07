@@ -53,7 +53,8 @@ const sendMessage = async (req, res) => {
       conversationId,
       text,
       userId: req.session.user.id,
-      userName: req.session.user.name
+      userName: req.session.user.name,
+      role: user.role
     });
     
     res.json({ success: true });

@@ -15,15 +15,16 @@ const loginShow = require('./routers/loginShow');
 const registerShow = require('./routers/registerShow');
 const chatRoutes = require('./routers/chat');
 const logoutRoutes = require('./routers/logout');
+const plansRoutes = require('./routers/plans');
+const crmRoutes = require('./routers/crm');
 const fourcontroller = require('./controller/404.js');
+
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-
-
 
 // Session
 app.use(session({
@@ -39,16 +40,18 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Routes
-app.use(dashboard)
+app.use(dashboard);
 app.use("/check", loginRoutes);
 app.use("/check", registerRoutes);
 app.use(loginShow);
 app.use(registerShow);
 app.use(chatRoutes);
 app.use(logoutRoutes);
-app.use(aiChatRoutes); 
+app.use(aiChatRoutes);
+app.use(plansRoutes);  
+app.use(crmRoutes);     
 
-//404
+// 404
 app.use(fourcontroller.get404);
 
 // Server

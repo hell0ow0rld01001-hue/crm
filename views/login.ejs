@@ -1,22 +1,30 @@
+<%- include('./includes/login/header.ejs') -%>
 
- <%- include('./includes/login/header.ejs') -%>
- <section class="contact">
-    <div class="contact-wrapper">
-      <div class="contact-circle"></div>
-      <div class="contact-header"></div>
-      <div class="contact-form-wrapper">
-        <span class="material-symbols-rounded">sign in</span>
-        <h4>We are Here for help You</h4>
-        <p>Log in to track technical requests</p>
-        <form action="/check/login" method="post">
-          <input type="number" name="phone" placeholder="Phone" />
-          <input type="password" name="password" id="pass" placeholder="Password" />
-          <button type="submit">Sign in</button>
-        </form>
-        <p style="margin-top: 15px; font-size: 14px;">
-          Don't have an account? <a href="/register">Register</a>
-        </p>
-      </div>
+<div class="auth-glow"></div>
+<div class="auth-glow-2"></div>
+
+<div class="auth-card" style="position:relative;z-index:1;">
+  <div class="auth-logo">MCI</div>
+  <div class="auth-tagline">Telecom CRM Platform</div>
+
+  <div class="auth-title">Welcome back</div>
+  <div class="auth-sub">Sign in to manage your customers</div>
+
+  <form action="/check/login" method="post" class="auth-form">
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="number" name="phone" placeholder="09xxxxxxxxx" required />
     </div>
-  </section>
- <%- include('./includes/login/footer.ejs') -%>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••" required />
+    </div>
+    <button type="submit" class="auth-submit">Sign In →</button>
+  </form>
+
+  <div class="auth-footer">
+    Don't have an account? <a href="/register">Create one</a>
+  </div>
+</div>
+
+<%- include('./includes/login/footer.ejs') -%>

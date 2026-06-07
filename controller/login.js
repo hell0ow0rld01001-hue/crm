@@ -10,7 +10,6 @@ const login = async (req, res) => {
     }
 
     const db = getDb();
-
     const users = await db.collection('users').find({}).toArray();
     let user = null;
     
@@ -31,9 +30,19 @@ const login = async (req, res) => {
       return res.redirect('/wrong-password');
     }
 
+    // Log login history
+    await db.collection('login_logs').insertOne({
+      userId: user._id.toString(),
+      userName: user.name,
+      role: user.role || 'user',
+      ip: req.ip || req.connection.remoteAddress || 'unknown',
+      loginAt: new Date()
+    });
+
     req.session.user = {
       id: user._id.toString(),
-      name: user.name
+      name: user.name,
+      role: user.role || 'user'
     };
 
     res.redirect('/dashboard');

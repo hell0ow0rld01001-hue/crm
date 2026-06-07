@@ -1,17 +1,21 @@
 <%- include('./includes/dashboard/header.ejs')-%>
+
 <header>
   <div class="container nav">
     <div class="logo">
-      <a class="logo-text" href="MCI.html">MCI</a>
+      <a class="logo-text" href="/dashboard">MCI</a>
     </div>
-
     <nav>
       <ul>
-        <li><a href="#">َAbout Us</a></li>
+        <li><a href="#">About</a></li>
         <li><a href="/chat">Support</a></li>
-        <li><a href="/ai-chat">AI</a></li>
-        <li><a href="#">Shopping cart</a></li>
-        <li><a href="#">Sing Up</a></li>
+        <li><a href="/ai-chat">AI Assistant</a></li>
+        <% if (['doller1','doller5','doller10'].includes(userRole)) { %>
+          <li><a href="/crm" style="color:var(--accent-light);">🛡 CRM</a></li>
+        <% } else { %>
+          <li><a href="/plans" style="color:var(--accent-light);">💎 Plans</a></li>
+        <% } %>
+        <li><a href="/logout">Logout</a></li>
       </ul>
     </nav>
   </div>
@@ -19,36 +23,78 @@
 
 <main class="container hero">
   <div class="hero-grid">
+
+    <!-- Left: Content -->
     <div class="hero-content">
       <h1>
-        Manage customers <br />
-        with<span class="gradient-text"> MCI</span>
+        Manage customers<br/>
+        with <span class="gradient-text"> MCI</span>
       </h1>
+      <p style="margin-top:10px;">
+        Welcome, <strong style="color:var(--accent-light);"><%= user.name %></strong>
+        <span class="chip" style="margin-left:8px;"><%= userRole %></span>
+      </p>
 
-      <div class="hero-actions"></div>
+      <div class="badge-row">
+        <div class="feature-badge">📡 Telecom CRM</div>
+        <div class="feature-badge">📊 Analytics</div>
+        <% if (['doller1','doller5','doller10'].includes(userRole)) { %>
+          <div class="feature-badge" style="color:var(--green);border-color:var(--green);background:var(--green-dim);">✓ Active Plan</div>
+        <% } %>
+      </div>
+
+      <div style="margin-top:28px;display:flex;gap:14px;flex-wrap:wrap;">
+        <% if (['doller1','doller5','doller10'].includes(userRole)) { %>
+          <a href="/crm" class="btn-primary">Open CRM Dashboard</a>
+        <% } else { %>
+          <a href="/plans" class="btn-primary">Get CRM Access</a>
+        <% } %>
+        <a href="/chat" class="btn-ghost">Go to Support</a>
+      </div>
     </div>
 
+    <!-- Right: Phone Card -->
     <div class="phone-card">
       <div class="app-screen">
         <div class="app-top">
-          <div class="greeting"></div>
+          <div>
+            <div class="greeting">Hello, <%= user.name %></div>
+            <div class="greeting-sub"><%= userRole %> account</div>
+          </div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-gradient);display:flex;align-items:center;justify-content:center;font-size:.9rem;">
+            <%= user.name.charAt(0).toUpperCase() %>
+          </div>
         </div>
+
         <div class="balance-card">
-          <small>Remaining Data</small>
-          <h2>99%</h2>
+          <small>Plan Usage</small>
+          <h2><%= remainingPercent %>%</h2>
+          <div class="days-left">
+            <% if (planExpiresAt) { %>
+              <%= remainingDays %> days remaining of <%= planDurationDays %>
+            <% } else { %>
+              No active plan
+            <% } %>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:<%= remainingPercent %>%;"></div>
+          </div>
         </div>
+
         <div class="mini-row">
           <div class="mini-box">
-            <strong>20GB</strong>
-            <span> Sales Volume</span>
+            <strong><%= planDurationDays %>d</strong>
+            <span>Plan Duration</span>
           </div>
           <div class="mini-box">
-            <strong>10GB</strong>
-            <span>Balance</span>
+            <strong><%= remainingDays %>d</strong>
+            <span>Days Left</span>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 </main>
+
 <%- include('./includes/dashboard/footer.ejs')-%>

@@ -3,5 +3,7 @@
   "typescript.disableAutomaticTypeAcquisition": true,
   "files.exclude": {
     "node_modules": true
-  }
+  },
+  "editor.lineNumbers": "relative",
+  "editor.renderWhitespace": "all"
 }

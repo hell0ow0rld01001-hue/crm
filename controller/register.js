@@ -13,25 +13,24 @@ const register = async (req, res) => {
     }
 
     const db = getDb();
-
     const existing = await db.collection('users').findOne({ phone });
     if (existing) {
       return res.status(409).json({ error: 'this phone number is already exist' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const hashedPhone = await bcrypt.hash(phone, 10);
 
     await db.collection('users').insertOne({
       name,
-      phone: hashedPhone,     
+      phone: hashedPhone,
       password: hashedPassword,
       role: 'user',
+      businessRevenue: 0,      // مبلغ پرداختی مشتری برای بیزینس
       createdAt: new Date()
     });
 
-    res.redirect("/login");
+    res.redirect('/login');
 
   } catch (error) {
     console.error(error);

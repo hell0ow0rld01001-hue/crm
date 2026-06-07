@@ -1,99 +1,155 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  text-decoration: none;
-  outline: none;
-  font-family: 'Mukta', sans-serif;
-}
+/* =============================================
+   LOGIN & REGISTER — dark theme (MCI CRM)
+   ============================================= */
 
-html {
-  font-size: 62.5%;
-}
+@import url('/css/shared.css');
 
-.contact {
-  width: 100%;
-  height: 100vh;
+body {
+  background: var(--bg-primary);
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
-.contact-wrapper {
+/* ---- Card ---- */
+.auth-card {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+  max-width: 440px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  box-shadow: 0 0 80px rgba(124,58,237,0.12);
 }
 
-.contact-form-wrapper {
-  width: 45rem;
-  background-color: #fff;
-  box-shadow: 0 1rem 10rem rgb(243, 106, 243);
-  z-index: 10;
-  padding: 4rem 2rem;
-  border-radius: 1rem;
-  text-align: center;
+/* ---- Logo ---- */
+.auth-logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  letter-spacing: -.02em;
 }
-
-.contact-form-wrapper span {
-  font-size: 8rem;
-  color: #8f42ec;
-}
-
-.contact-form-wrapper h4 {
-  font-size: 1.6rem;
-  font-weight: 300;
+.auth-tagline {
+  font-size: .82rem;
+  color: var(--text-dim);
   text-transform: uppercase;
-  color: #8f42ec;
-  letter-spacing: 0.1rem;
-  margin: 3rem 0 1rem 0;
+  letter-spacing: .06em;
+  margin-bottom: 36px;
 }
 
-.contact-form-wrapper p {
-  font-size: 1.8rem;
-  font-weight: 300;
-  color: #5c646d;
-  margin-bottom: 3rem;
-}
-
-.contact-form-wrapper form {
-  display: flex;
-  flex-direction: column;
-}
-
-.contact-form-wrapper input {
-  width: 100%;
-  margin: 1rem 0;
-  background-color: #f0f2f4;
-  padding: 1rem 1rem 1rem 2rem;
-  border: none;
-  border-radius: 0.5rem;
+/* ---- Headings ---- */
+.auth-title {
   font-size: 1.5rem;
-  font-weight: 300;
-  height: 5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.auth-sub {
+  font-size: .88rem;
+  color: var(--text-muted);
+  margin-bottom: 28px;
 }
 
-.contact-form-wrapper input::placeholder {
-  color: #0d335f;
-}
+/* ---- Form ---- */
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
 
-.contact-form-wrapper button {
-  height: 5rem;
-  background: linear-gradient(to right, #ac40ec, #852dea);
-  border: none;
-  border-radius: 5rem;
-  font-size: 1.4rem;
-  font-weight: bold;
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1rem;
-  color: #fff;
-  cursor: pointer;
-  margin-top: 2rem;
+  letter-spacing: .04em;
 }
 
-.contact-form-wrapper a {
-  color: #8f42ec;
-  font-weight: bold;
+.auth-form input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: .92rem;
+  font-family: var(--font-main);
+  outline: none;
+  transition: border-color .2s, background .2s;
+}
+.auth-form input::placeholder { color: var(--text-dim); }
+.auth-form input:focus {
+  border-color: var(--border-accent);
+  background: rgba(124,58,237,0.06);
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 13px;
+  margin-top: 6px;
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+}
+.auth-submit:hover { opacity: .88; transform: translateY(-1px); }
+
+/* ---- Footer link ---- */
+.auth-footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+.auth-footer a { color: var(--accent-light); font-weight: 600; }
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ---- Divider ---- */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+.auth-divider::before,.auth-divider::after {
+  content:''; flex:1; height:1px; background: var(--border);
+}
+.auth-divider span { font-size: .75rem; color: var(--text-dim); }
+
+/* ---- Error / Alert ---- */
+.auth-alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: .85rem;
+  background: var(--red-dim);
+  border: 1px solid rgba(239,68,68,.35);
+  color: var(--red);
+}
+
+/* ---- Decorative glow ---- */
+.auth-glow {
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(124,58,237,.18) 0%,transparent 70%);
+  pointer-events: none;
+  top: -80px;
+  left: -80px;
+  z-index: 0;
+}
+.auth-glow-2 {
+  position: fixed;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(79,70,229,.14) 0%,transparent 70%);
+  pointer-events: none;
+  bottom: -60px; right: -60px; z-index: 0;
 }

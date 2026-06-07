@@ -1,24 +1,38 @@
- <%- include('./includes/register/header.ejs') -%>
+<%- include('./includes/register/header.ejs') -%>
 
-  <section class="contact">
-    <div class="contact-wrapper">
-      <div class="contact-circle"></div>
-      <div class="contact-header"></div>
-      <div class="contact-form-wrapper">
-        <span class="material-symbols-rounded">sign up</span>
-        <h4>Create Your Account</h4>
-        <p>Sign up to get started</p>
-        <form action="/check/register" method="post">
-          <input type="text" name="name" placeholder="Name" />
-          <input type="number" name="phone" placeholder="Phone" />
-          <input type="password" name="password" placeholder="Password" />
-          <input type="password" name="confirmPassword" placeholder="Confirm Password" />
-          <button type="submit">Register</button>
-        </form>
-        <p style="margin-top: 15px; font-size: 14px;">
-          Already have an account? <a href="/login">Login</a>
-        </p>
-      </div>
+<div class="auth-glow"></div>
+<div class="auth-glow-2"></div>
+
+<div class="auth-card" style="position:relative;z-index:1;">
+  <div class="auth-logo">MCI</div>
+  <div class="auth-tagline">Telecom CRM Platform</div>
+
+  <div class="auth-title">Create Account</div>
+  <div class="auth-sub">Join the MCI CRM platform today</div>
+
+  <form action="/check/register" method="post" class="auth-form">
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" name="name" placeholder="Your name" required />
     </div>
-  </section>
- <%- include('./includes/register/footer.ejs') -%>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="number" name="phone" placeholder="09xxxxxxxxx" required />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••" required />
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" name="confirmPassword" placeholder="••••••••" required />
+    </div>
+    <button type="submit" class="auth-submit">Create Account →</button>
+  </form>
+
+  <div class="auth-footer">
+    Already have an account? <a href="/login">Sign in</a>
+  </div>
+</div>
+
+<%- include('./includes/register/footer.ejs') -%>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Dashboard — MCI</title>
+  <link rel="stylesheet" href="/css/crm-dashboard.css">
+</head>
+<body>
+
+<!-- ==================== SIDEBAR ==================== -->
+<div class="sidebar">
+  <div class="sidebar-logo">MCI</div>
+  <div class="sidebar-sub">Telecom CRM</div>
+
+  <div class="sidebar-section">Main</div>
+
+  <div class="nav-item active" onclick="showPanel('overview',this)">
+    <span class="nav-icon">📊</span> Overview
+  </div>
+  <div class="nav-item" onclick="showPanel('kpi',this)">
+    <span class="nav-icon">📈</span> KPI Analytics
+  </div>
+  <div class="nav-item" onclick="showPanel('customers',this)">
+    <span class="nav-icon">👥</span> Customers
+    <span class="badge-count"><%= kpi.totalUsers %></span>
+  </div>
+
+  <div class="sidebar-section">Support</div>
+
+  <div class="nav-item" onclick="showPanel('tickets',this)">
+    <span class="nav-icon">🎫</span> Tickets
+    <% if (kpi.openTickets > 0) { %><span class="badge-count red"><%= kpi.openTickets %></span><% } %>
+  </div>
+  <div class="nav-item" onclick="showPanel('support',this)">
+    <span class="nav-icon">💬</span> Messages
+    <span class="badge-count"><%= conversations.length %></span>
+  </div>
+
+  <div class="sidebar-section">Network</div>
+
+  <div class="nav-item" onclick="showPanel('network',this)">
+    <span class="nav-icon">📡</span> Network Issues
+    <% if (kpi.openNetworkIssues > 0) { %><span class="badge-count red"><%= kpi.openNetworkIssues %></span><% } %>
+  </div>
+  <div class="nav-item" onclick="showPanel('sim',this)">
+    <span class="nav-icon">📱</span> SIM Cards
+  </div>
+
+  <div class="sidebar-section">Alerts</div>
+
+  <div class="nav-item" onclick="showPanel('renewals',this)">
+    <span class="nav-icon">🔔</span> Renewals
+    <% if (kpi.expiringCount > 0) { %><span class="badge-count gold"><%= kpi.expiringCount %></span><% } %>
+  </div>
+  <div class="nav-item" onclick="showPanel('logins',this)">
+    <span class="nav-icon">🔑</span> Login History
+  </div>
+
+  <!-- Sidebar footer -->
+  <div class="sidebar-footer">
+    <div class="plan-badge">
+      <strong><%= currentUser.role %></strong>
+      <span>Active Plan</span>
+      <% if (currentUser.planExpiresAt) {
+           const rem = Math.max(0, Math.ceil((new Date(currentUser.planExpiresAt) - new Date()) / (1000*60*60*24)));
+           const pct = Math.min(100, Math.round((rem/30)*100));
+      %>
+      <div class="plan-expiry">
+        <div class="plan-expiry-bar"><div class="plan-expiry-fill" style="width:<%= pct %>%;"></div></div>
+        <div class="plan-expiry-label"><%= rem %> days left</div>
+      </div>
+      <% } %>
+    </div>
+    <a href="/logout"><button class="logout-btn">⬅ Logout</button></a>
+  </div>
+</div>
+
+<!-- ==================== MAIN ==================== -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <h1>Welcome, <span><%= user.name %></span></h1>
+    <div class="topbar-right">
+      <% if (kpi.expiringCount > 0) { %>
+        <span title="<%= kpi.expiringCount %> plans expiring soon" style="cursor:pointer;" onclick="showPanel('renewals',null)">
+          🔔 <span class="notif-dot"></span>
+        </span>
+      <% } %>
+      <div class="user-chip">🛡 <%= currentUser.role %></div>
+    </div>
+  </div>
+
+  <!-- ==================== OVERVIEW ==================== -->
+  <div class="panel active" id="panel-overview">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Customers</div>
+        <div class="stat-value purple"><%= kpi.totalUsers %></div>
+        <div class="stat-trend">All registered users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Plans</div>
+        <div class="stat-value green"><%= kpi.activeUsers %></div>
+        <div class="stat-trend">Paid subscribers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open Tickets</div>
+        <div class="stat-value red"><%= kpi.openTickets %></div>
+        <div class="stat-trend">Needs attention</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Network Issues</div>
+        <div class="stat-value red"><%= kpi.openNetworkIssues %></div>
+        <div class="stat-trend">Unresolved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value gold">$<%= kpi.totalRevenue %></div>
+        <div class="stat-trend">Business revenue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Plan Revenue</div>
+        <div class="stat-value blue">$<%= kpi.planRevenue %></div>
+        <div class="stat-trend">Subscription income</div>
+      </div>
+    </div>
+
+    <!-- Expiring soon banner -->
+    <% if (expiringUsers.length > 0) { %>
+    <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:12px;padding:14px 20px;margin-bottom:22px;display:flex;align-items:center;gap:14px;">
+      <span style="font-size:1.3rem;">⚠️</span>
+      <div>
+        <strong style="color:#f87171;font-size:.9rem;"><%= expiringUsers.length %> customer<%= expiringUsers.length>1?'s':'' %> expiring within 5 days</strong>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px;">
+          <%= expiringUsers.map(u=>u.name).join(', ') %>
+        </div>
+      </div>
+      <button class="save-btn" style="margin-left:auto;" onclick="showPanel('renewals',null)">View All</button>
+    </div>
+    <% } %>
+
+    <!-- Recent Logins -->
+    <div class="section-title">🔑 Recent Login Activity</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Role</th><th>IP</th><th>Time</th></tr></thead>
+        <tbody>
+          <% loginLogs.slice(0,8).forEach(log => { %>
+          <tr>
+            <td><strong><%= log.userName %></strong></td>
+            <td><span class="badge badge-<%= log.role %>"><%= log.role %></span></td>
+            <td><code style="font-size:.78rem;color:var(--text-dim);"><%= log.ip %></code></td>
+            <td style="color:var(--text-muted);font-size:.8rem;"><%= new Date(log.loginAt).toLocaleString() %></td>
+          </tr>
+          <% }) %>
+          <% if (!loginLogs.length) { %>
+          <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:28px;">No login records</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Top Revenue -->
+    <div class="section-title">💰 Top Revenue Customers</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Revenue</th><th>Joined</th></tr></thead>
+        <tbody>
+          <% users.filter(u=>u.businessRevenue>0).slice(0,5).forEach(u => { %>
+          <tr>
+            <td><strong><%= u.name %></strong></td>
+            <td><span class="badge badge-<%= u.role %>"><%= u.role %></span></td>
+            <td><strong style="color:var(--green);">$<%= (u.businessRevenue||0).toFixed(2) %></strong></td>
+            <td style="color:var(--text-muted);font-size:.8rem;"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+          </tr>
+          <% }) %>
+          <% if (!users.some(u=>u.businessRevenue>0)) { %>
+          <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:28px;">No revenue data yet</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== KPI ANALYTICS ==================== -->
+  <div class="panel" id="panel-kpi">
+    <div class="section-title">📈 KPI — Key Performance Indicators</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">ARPU</div>
+        <div class="kpi-val" style="color:var(--gold);">$<%= kpi.arpu %></div>
+        <div class="kpi-desc">Average Revenue Per User</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Churn Rate</div>
+        <div class="kpi-val" style="color:var(--red);"><%= kpi.churnRate %>%</div>
+        <div class="kpi-desc">Customers without active plan</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Conversion Rate</div>
+        <div class="kpi-val" style="color:var(--green);">
+          <%= kpi.totalUsers > 0 ? ((kpi.activeUsers/kpi.totalUsers)*100).toFixed(1) : 0 %>%
+        </div>
+        <div class="kpi-desc">Free → Paid conversion</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Plan Revenue</div>
+        <div class="kpi-val" style="color:var(--blue);">$<%= kpi.planRevenue %></div>
+        <div class="kpi-desc">From subscription purchases</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ticket Resolution Rate</div>
+        <div class="kpi-val" style="color:var(--green);">
+          <% const total = kpi.openTickets + kpi.resolvedTickets; %>
+          <%= total > 0 ? ((kpi.resolvedTickets/total)*100).toFixed(0) : 0 %>%
+        </div>
+        <div class="kpi-desc"><%= kpi.resolvedTickets %> resolved / <%= total %> total</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Renewals at Risk</div>
+        <div class="kpi-val" style="color:var(--red);"><%= kpi.expiringCount %></div>
+        <div class="kpi-desc">Plans expiring within 5 days</div>
+      </div>
+    </div>
+
+    <div class="section-title">📊 Plan Distribution</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan</th><th>Users</th><th>% Share</th></tr></thead>
+        <tbody>
+          <% [['doller1','Starter','#4ade80'],['doller5','Pro','#fbbf24'],['doller10','Business','#f87171'],['user','Free','#60a5fa']].forEach(([role,name,color]) => {
+               const cnt = users.filter(u=>u.role===role).length;
+               const pct = kpi.totalUsers > 0 ? ((cnt/kpi.totalUsers)*100).toFixed(1) : 0;
+          %>
+          <tr>
+            <td><span class="badge badge-<%= role %>"><%= name %></span></td>
+            <td><strong><%= cnt %></strong></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="flex:1;height:5px;background:var(--border);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;width:<%= pct %>%;background:<%= color %>;border-radius:4px;"></div>
+                </div>
+                <span style="font-size:.78rem;color:var(--text-muted);width:40px;"><%= pct %>%</span>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== CUSTOMERS ==================== -->
+  <div class="panel" id="panel-customers">
+    <div class="section-title" style="justify-content:space-between;">
+      👥 Customers (<%= users.length %>)
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Plan</th><th>Expires</th><th>Revenue ($)</th><th>Joined</th></tr></thead>
+        <tbody>
+          <% users.forEach((u,i) => {
+               const rem = u.planExpiresAt ? Math.max(0, Math.ceil((new Date(u.planExpiresAt)-new Date())/(1000*60*60*24))) : null;
+               const isExpiring = rem !== null && rem <= 5;
+          %>
+          <tr>
+            <td style="color:var(--text-dim);font-size:.78rem;"><%= i+1 %></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--accent-gradient);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;">
+                  <%= u.name.charAt(0).toUpperCase() %>
+                </div>
+                <strong><%= u.name %></strong>
+              </div>
+            </td>
+            <td><span class="badge badge-<%= u.role %>"><%= u.role %></span></td>
+            <td>
+              <% if (rem !== null) { %>
+                <span style="font-size:.8rem;color:<%= isExpiring ? 'var(--red)' : 'var(--text-muted)' %>;">
+                  <%= isExpiring ? '⚠️ ' : '' %><%= rem %>d left
+                </span>
+              <% } else { %><span style="color:var(--text-dim);font-size:.78rem;">—</span><% } %>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input class="revenue-input" type="number" step="0.01" min="0"
+                  value="<%= (u.businessRevenue||0).toFixed(2) %>"
+                  id="rev-<%= u._id %>" />
+                <button class="save-btn" onclick="saveRevenue('<%= u._id %>')">Save</button>
+              </div>
+            </td>
+            <td style="color:var(--text-muted);font-size:.8rem;"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+          </tr>
+          <% }) %>
+          <% if (!users.length) { %>
+          <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:36px;">No customers yet</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== TICKETS ==================== -->
+  <div class="panel" id="panel-tickets">
+    <div class="section-title" style="justify-content:space-between;">
+      🎫 Support Tickets
+      <button class="btn-primary" style="font-size:.82rem;padding:8px 16px;" onclick="openModal('modal-ticket')">+ New Ticket</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Title</th><th>Customer</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th><th>Action</th></tr></thead>
+        <tbody id="tickets-tbody">
+          <% tickets.forEach(t => { %>
+          <tr>
+            <td><strong><%= t.title %></strong>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;"><%= t.description.substring(0,50) %>…</div>
+            </td>
+            <td><%= t.customerName %></td>
+            <td><span class="badge badge-<%= t.priority %>"><%= t.priority %></span></td>
+            <td><span class="badge badge-<%= t.status %>"><%= t.status %></span></td>
+            <td style="color:var(--text-muted);font-size:.82rem;"><%= t.assignedTo %></td>
+            <td style="color:var(--text-muted);font-size:.78rem;"><%= new Date(t.createdAt).toLocaleDateString() %></td>
+            <td>
+              <% if (t.status === 'open') { %>
+                <button class="save-btn" onclick="resolveTicket('<%= t._id %>')">✓ Resolve</button>
+              <% } else { %>
+                <span style="color:var(--green);font-size:.78rem;">✓ Done</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+          <% if (!tickets.length) { %>
+          <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:36px;">No tickets yet — create the first one!</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SUPPORT MESSAGES ==================== -->
+  <div class="panel" id="panel-support">
+    <div class="section-title">💬 Support Conversations (<%= conversations.length %>)</div>
+    <% if (!conversations.length) { %>
+      <div style="text-align:center;color:var(--text-dim);padding:60px;font-size:.9rem;">No messages yet</div>
+    <% } else { %>
+    <div class="conv-grid">
+      <div class="conv-list">
+        <div class="conv-header">Conversations (<%= conversations.length %>)</div>
+        <% conversations.forEach((conv,i) => { %>
+        <div class="conv-item" id="conv-<%= i %>" onclick="selectConv(<%= i %>)">
+          <div class="conv-name"><%= conv.messages[0] ? conv.messages[0].userName : 'Unknown' %></div>
+          <div class="conv-preview"><%= conv.lastMessage ? conv.lastMessage.text : '' %></div>
+        </div>
+        <% }) %>
+      </div>
+      <div class="conv-messages">
+        <div class="messages-area" id="messages-area">
+          <div class="empty-state"><div class="empty-icon">💬</div><div>Select a conversation</div></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const convData = <%- JSON.stringify(conversations) %>;
+      function selectConv(i) {
+        document.querySelectorAll('.conv-item').forEach(el=>el.classList.remove('selected'));
+        const el=document.getElementById('conv-'+i);
+        if(el) el.classList.add('selected');
+        const msgs=convData[i].messages;
+        const area=document.getElementById('messages-area');
+        area.innerHTML='';
+        if(!msgs.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><div>No messages</div></div>';return;}
+        msgs.forEach(m=>{
+          const d=document.createElement('div');
+          const isOther=m.role==='support'||m.userId!==m.conversationId;
+          d.className=isOther?'msg-bubble msg-other':'msg-bubble msg-user';
+          d.innerHTML=`<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;">${m.userName}</div>${m.text}<div class="msg-meta">${new Date(m.createdAt).toLocaleString()}</div>`;
+          area.appendChild(d);
+        });
+        area.scrollTop=area.scrollHeight;
+      }
+    </script>
+    <% } %>
+  </div>
+
+  <!-- ==================== NETWORK ISSUES ==================== -->
+  <div class="panel" id="panel-network">
+    <div class="section-title" style="justify-content:space-between;">
+      📡 Network Issues
+      <button class="btn-primary" style="font-size:.82rem;padding:8px 16px;" onclick="openModal('modal-network')">+ Report Issue</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Type</th><th>Severity</th><th>Status</th><th>Reported By</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody>
+          <% networkIssues.forEach(n => { %>
+          <tr>
+            <td><strong><%= n.area %></strong>
+              <% if (n.description) { %><div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;"><%= n.description.substring(0,50) %></div><% } %>
+            </td>
+            <td><%= n.type %></td>
+            <td>
+              <span class="severity-dot severity-<%= n.severity %>"></span>
+              <span class="badge badge-<%= n.severity==='critical'?'critical':n.severity==='high'?'high':n.severity==='low'?'low':'medium' %>"><%= n.severity %></span>
+            </td>
+            <td><span class="badge badge-<%= n.status %>"><%= n.status %></span></td>
+            <td style="color:var(--text-muted);font-size:.82rem;"><%= n.reportedBy %></td>
+            <td style="color:var(--text-muted);font-size:.78rem;"><%= new Date(n.reportedAt).toLocaleDateString() %></td>
+            <td>
+              <% if (n.status==='open') { %>
+                <button class="save-btn" onclick="resolveNetwork('<%= n._id %>')">✓ Resolved</button>
+              <% } else { %>
+                <span style="color:var(--green);font-size:.78rem;">✓ Fixed</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+          <% if (!networkIssues.length) { %>
+          <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:36px;">No network issues reported</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SIM CARDS ==================== -->
+  <div class="panel" id="panel-sim">
+    <div class="section-title" style="justify-content:space-between;">
+      📱 SIM Card Management
+      <button class="btn-primary" style="font-size:.82rem;padding:8px 16px;" onclick="openModal('modal-sim')">+ Add / Update SIM</button>
+    </div>
+    <div class="table-wrap" id="sim-table-wrap">
+      <table>
+        <thead><tr><th>Customer</th><th>MSISDN</th><th>ICCID</th><th>Type</th><th>Status</th><th>Updated</th></tr></thead>
+        <tbody id="sim-tbody">
+          <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:28px;">Loading SIM cards…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== RENEWALS ==================== -->
+  <div class="panel" id="panel-renewals">
+    <div class="section-title">🔔 Plans Expiring Soon</div>
+    <% if (!expiringUsers.length) { %>
+      <div style="text-align:center;color:var(--text-dim);padding:60px;">
+        <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
+        No plans expiring in the next 5 days
+      </div>
+    <% } else { %>
+    <div class="renewals-grid">
+      <% expiringUsers.forEach(u => {
+           const rem = Math.max(0, Math.ceil((new Date(u.planExpiresAt)-new Date())/(1000*60*60*24)));
+           const urgent = rem <= 2;
+      %>
+      <div class="renewal-card <%= urgent ? 'urgent' : 'soon' %>">
+        <div class="renewal-avatar"><%= u.name.charAt(0).toUpperCase() %></div>
+        <div style="flex:1;">
+          <div style="font-weight:700;color:var(--text-primary);font-size:.95rem;"><%= u.name %></div>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">Plan: <span class="badge badge-<%= u.role %>" style="font-size:.7rem;"><%= u.role %></span></div>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px;">
+            Expires: <strong style="color:<%= urgent?'var(--red)':'var(--gold)' %>;"><%= new Date(u.planExpiresAt).toLocaleDateString('en-GB') %></strong>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:1.4rem;font-weight:800;color:<%= urgent?'var(--red)':'var(--gold)' %>;"><%= rem %></div>
+          <div style="font-size:.7rem;color:var(--text-dim);">days left</div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <!-- Plan purchase history -->
+    <div class="section-title" style="margin-top:16px;">📋 Recent Plan Purchases</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Customer</th><th>Plan</th><th>Price</th><th>Duration</th><th>Expires</th><th>Purchased</th></tr></thead>
+        <tbody>
+          <% planPurchases.slice(0,15).forEach(p => { %>
+          <tr>
+            <td><strong><%= p.userName %></strong></td>
+            <td><span class="badge badge-<%= p.role %>"><%= p.plan %></span></td>
+            <td style="color:var(--green);">$<%= p.price %></td>
+            <td style="color:var(--text-muted);font-size:.82rem;"><%= p.durationDays || 30 %> days</td>
+            <td style="color:var(--text-muted);font-size:.82rem;"><%= p.expiresAt ? new Date(p.expiresAt).toLocaleDateString('en-GB') : '—' %></td>
+            <td style="color:var(--text-muted);font-size:.78rem;"><%= new Date(p.purchasedAt).toLocaleDateString() %></td>
+          </tr>
+          <% }) %>
+          <% if (!planPurchases.length) { %>
+          <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:28px;">No purchases yet</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIN HISTORY ==================== -->
+  <div class="panel" id="panel-logins">
+    <div class="section-title">🔑 Login History (<%= loginLogs.length %>)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>User</th><th>Role</th><th>IP Address</th><th>Time</th></tr></thead>
+        <tbody>
+          <% loginLogs.forEach((log,i) => { %>
+          <tr>
+            <td style="color:var(--text-dim);font-size:.78rem;"><%= i+1 %></td>
+            <td><strong><%= log.userName %></strong></td>
+            <td><span class="badge badge-<%= log.role %>"><%= log.role %></span></td>
+            <td><code style="font-size:.78rem;color:var(--text-muted);"><%= log.ip %></code></td>
+            <td style="color:var(--text-muted);font-size:.8rem;"><%= new Date(log.loginAt).toLocaleString() %></td>
+          </tr>
+          <% }) %>
+          <% if (!loginLogs.length) { %>
+          <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:36px;">No login records</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== MODAL: NEW TICKET ==================== -->
+<div class="modal-overlay" id="modal-ticket">
+  <div class="modal-box">
+    <div class="modal-title">🎫 Create New Ticket <span class="modal-close" onclick="closeModal('modal-ticket')">✕</span></div>
+    <div class="form-row"><label>Title</label><input class="form-input" id="t-title" placeholder="Brief issue title" /></div>
+    <div class="form-row"><label>Customer Name</label><input class="form-input" id="t-customer" placeholder="Customer's name" /></div>
+    <div class="form-row"><label>Priority</label>
+      <select class="form-input" id="t-priority">
+        <option value="low">🟢 Low</option>
+        <option value="medium" selected>🟡 Medium</option>
+        <option value="high">🔴 High</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Description</label>
+      <textarea class="form-input" id="t-desc" rows="3" placeholder="Describe the issue…" style="resize:vertical;"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="submitTicket()">Create Ticket</button>
+      <button class="btn-ghost" onclick="closeModal('modal-ticket')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: NETWORK ISSUE ==================== -->
+<div class="modal-overlay" id="modal-network">
+  <div class="modal-box">
+    <div class="modal-title">📡 Report Network Issue <span class="modal-close" onclick="closeModal('modal-network')">✕</span></div>
+    <div class="form-row"><label>Area / Region</label><input class="form-input" id="n-area" placeholder="e.g. Tehran — Zone 7" /></div>
+    <div class="form-row"><label>Issue Type</label>
+      <select class="form-input" id="n-type">
+        <option>Signal Loss</option>
+        <option>Data Outage</option>
+        <option>Voice Quality</option>
+        <option>SMS Failure</option>
+        <option>4G/5G Handover</option>
+        <option>Base Station Down</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Severity</label>
+      <select class="form-input" id="n-severity">
+        <option value="low">🟢 Low</option>
+        <option value="medium" selected>🟡 Medium</option>
+        <option value="high">🟠 High</option>
+        <option value="critical">🔴 Critical</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Description</label>
+      <textarea class="form-input" id="n-desc" rows="3" placeholder="Additional details…" style="resize:vertical;"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="submitNetwork()">Submit Report</button>
+      <button class="btn-ghost" onclick="closeModal('modal-network')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: SIM ==================== -->
+<div class="modal-overlay" id="modal-sim">
+  <div class="modal-box">
+    <div class="modal-title">📱 Add / Update SIM Card <span class="modal-close" onclick="closeModal('modal-sim')">✕</span></div>
+    <div class="form-row"><label>Customer</label>
+      <select class="form-input" id="s-user">
+        <% users.forEach(u => { %><option value="<%= u._id %>"><%= u.name %> (<%= u.role %>)</option><% }) %>
+      </select>
+    </div>
+    <div class="form-row"><label>MSISDN (Phone Number)</label><input class="form-input" id="s-msisdn" placeholder="09xxxxxxxxx" /></div>
+    <div class="form-row"><label>ICCID</label><input class="form-input" id="s-iccid" placeholder="89xx…" /></div>
+    <div class="form-row"><label>SIM Type</label>
+      <select class="form-input" id="s-type">
+        <option value="2G">2G</option>
+        <option value="3G">3G</option>
+        <option value="4G" selected>4G</option>
+        <option value="5G">5G</option>
+        <option value="eSIM">eSIM</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Status</label>
+      <select class="form-input" id="s-status">
+        <option value="active" selected>Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="blocked">Blocked</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="submitSim()">Save SIM</button>
+      <button class="btn-ghost" onclick="closeModal('modal-sim')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+  /* --- Panel nav --- */
+  function showPanel(name, el) {
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('panel-'+name).classList.add('active');
+    if (el) el.classList.add('active');
+    if (name==='sim') loadSims();
+  }
+
+  /* --- Toast --- */
+  function showToast(msg, ok=true) {
+    const t=document.getElementById('toast');
+    t.textContent=msg;
+    t.style.borderColor=ok?'var(--border-accent)':'rgba(239,68,68,.5)';
+    t.style.color=ok?'var(--accent-light)':'var(--red)';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2800);
+  }
+
+  /* --- Revenue --- */
+  async function saveRevenue(userId) {
+    const val=document.getElementById('rev-'+userId).value;
+    const res=await fetch('/crm/update-revenue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,revenue:parseFloat(val)})});
+    if(res.ok) showToast('✓ Revenue updated!'); else showToast('✗ Failed','error');
+  }
+
+  /* --- Modals --- */
+  function openModal(id){document.getElementById(id).classList.add('open');}
+  function closeModal(id){document.getElementById(id).classList.remove('open');}
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+  /* --- Tickets --- */
+  async function submitTicket() {
+    const title=document.getElementById('t-title').value.trim();
+    const description=document.getElementById('t-desc').value.trim();
+    const priority=document.getElementById('t-priority').value;
+    const customerName=document.getElementById('t-customer').value.trim();
+    if(!title||!description){showToast('✗ Fill all required fields',false);return;}
+    const res=await fetch('/crm/tickets/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,description,priority,customerName})});
+    if(res.ok){showToast('✓ Ticket created!');closeModal('modal-ticket');setTimeout(()=>location.reload(),1000);}
+    else showToast('✗ Failed',false);
+  }
+  async function resolveTicket(id) {
+    const res=await fetch('/crm/tickets/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketId:id,status:'resolved'})});
+    if(res.ok){showToast('✓ Ticket resolved!');setTimeout(()=>location.reload(),900);}
+    else showToast('✗ Failed',false);
+  }
+
+  /* --- Network issues --- */
+  async function submitNetwork() {
+    const area=document.getElementById('n-area').value.trim();
+    const type=document.getElementById('n-type').value;
+    const severity=document.getElementById('n-severity').value;
+    const description=document.getElementById('n-desc').value.trim();
+    if(!area){showToast('✗ Enter the area',false);return;}
+    const res=await fetch('/crm/network/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({area,type,severity,description})});
+    if(res.ok){showToast('✓ Issue reported!');closeModal('modal-network');setTimeout(()=>location.reload(),1000);}
+    else showToast('✗ Failed',false);
+  }
+  async function resolveNetwork(id) {
+    const res=await fetch('/crm/network/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({issueId:id})});
+    if(res.ok){showToast('✓ Issue resolved!');setTimeout(()=>location.reload(),900);}
+    else showToast('✗ Failed',false);
+  }
+
+  /* --- SIM Cards --- */
+  async function loadSims() {
+    const tbody=document.getElementById('sim-tbody');
+    try {
+      const res=await fetch('/crm/sim/list');
+      const sims=await res.json();
+      if(!sims.length){
+        tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:28px;">No SIM cards registered yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML=sims.map(s=>`
+        <tr>
+          <td><strong>${s.userId}</strong></td>
+          <td style="font-family:monospace;font-size:.85rem;">${s.msisdn}</td>
+          <td style="font-family:monospace;font-size:.75rem;color:var(--text-muted);">${s.iccid||'—'}</td>
+          <td><span class="sim-type-badge">${s.simType||'4G'}</span></td>
+          <td><span class="sim-${s.status==='active'?'active':'inactive'}" style="font-weight:700;font-size:.82rem;">${s.status==='active'?'● Active':'● Inactive'}</span></td>
+          <td style="color:var(--text-muted);font-size:.78rem;">${new Date(s.updatedAt).toLocaleDateString()}</td>
+        </tr>`).join('');
+    } catch(e) {
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px;">Failed to load SIM data</td></tr>';
+    }
+  }
+  async function submitSim() {
+    const userId=document.getElementById('s-user').value;
+    const msisdn=document.getElementById('s-msisdn').value.trim();
+    const iccid=document.getElementById('s-iccid').value.trim();
+    const simType=document.getElementById('s-type').value;
+    const status=document.getElementById('s-status').value;
+    if(!msisdn){showToast('✗ MSISDN is required',false);return;}
+    const res=await fetch('/crm/sim/upsert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,msisdn,iccid,simType,status})});
+    if(res.ok){showToast('✓ SIM saved!');closeModal('modal-sim');loadSims();}
+    else showToast('✗ Failed',false);
+  }
+</script>
+
+</body>
+</html>
