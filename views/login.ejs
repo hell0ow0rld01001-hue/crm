@@ -1,5 +1,20 @@
 <%- include('./includes/login/header.ejs') -%>
 
+<style>
+.field-error {
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 5px;
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+.field-error.show { display: flex; }
+.form-group input.error-border { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+.form-group input.ok-border { border-color: #4ade80 !important; }
+</style>
+
 <div class="auth-glow"></div>
 <div class="auth-glow-2"></div>
 
@@ -10,14 +25,16 @@
   <div class="auth-title">Welcome back</div>
   <div class="auth-sub">Sign in to manage your customers</div>
 
-  <form action="/check/login" method="post" class="auth-form">
+  <form action="/check/login" method="post" class="auth-form" onsubmit="return validateLogin()">
     <div class="form-group">
-      <label>Phone Number</label>
-      <input type="number" name="phone" placeholder="09xxxxxxxxx" required />
+      <label>Phone Number (شماره موبایل)</label>
+      <input type="text" name="phone" id="inp-phone" placeholder="09xxxxxxxxx" required maxlength="11" oninput="validatePhone(this)" />
+      <div class="field-error" id="err-phone">⚠ شماره موبایل باید دقیقاً ۱۱ رقم باشد</div>
     </div>
     <div class="form-group">
-      <label>Password</label>
-      <input type="password" name="password" placeholder="••••••••" required />
+      <label>Password (رمز عبور)</label>
+      <input type="password" name="password" id="inp-password" placeholder="••••••••" required oninput="validatePassword(this)" />
+      <div class="field-error" id="err-password">⚠ رمز باید حداقل ۸ کاراکتر و شامل یک حرف بزرگ باشد</div>
     </div>
     <button type="submit" class="auth-submit">Sign In →</button>
   </form>
@@ -26,5 +43,59 @@
     Don't have an account? <a href="/register">Create one</a>
   </div>
 </div>
+
+<script>
+  function validatePhone(input) {
+    const val = input.value.replace(/\D/g, '');
+    input.value = val;
+    const err = document.getElementById('err-phone');
+    if (val.length > 0 && val.length !== 11) {
+      input.classList.add('error-border');
+      input.classList.remove('ok-border');
+      err.classList.add('show');
+    } else if (val.length === 11) {
+      input.classList.remove('error-border');
+      input.classList.add('ok-border');
+      err.classList.remove('show');
+    } else {
+      input.classList.remove('error-border', 'ok-border');
+      err.classList.remove('show');
+    }
+  }
+
+  function validatePassword(input) {
+    const val = input.value;
+    const err = document.getElementById('err-password');
+    if (val.length > 0 && (val.length < 8 || !/[A-Z]/.test(val))) {
+      input.classList.add('error-border');
+      input.classList.remove('ok-border');
+      err.classList.add('show');
+    } else if (val.length >= 8 && /[A-Z]/.test(val)) {
+      input.classList.remove('error-border');
+      input.classList.add('ok-border');
+      err.classList.remove('show');
+    } else {
+      input.classList.remove('error-border', 'ok-border');
+      err.classList.remove('show');
+    }
+  }
+
+  function validateLogin() {
+    const phone = document.getElementById('inp-phone').value;
+    const pass = document.getElementById('inp-password').value;
+    let ok = true;
+    if (phone.length !== 11) {
+      document.getElementById('err-phone').classList.add('show');
+      document.getElementById('inp-phone').classList.add('error-border');
+      ok = false;
+    }
+    if (pass.length < 8 || !/[A-Z]/.test(pass)) {
+      document.getElementById('err-password').classList.add('show');
+      document.getElementById('inp-password').classList.add('error-border');
+      ok = false;
+    }
+    return ok;
+  }
+</script>
 
 <%- include('./includes/login/footer.ejs') -%>

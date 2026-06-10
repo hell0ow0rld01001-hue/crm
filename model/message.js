@@ -1,4 +1,5 @@
 const { getDb } = require('./mongo');
+const { ObjectId } = require('mongodb');
 
 const MessageModel = {
   async create(message) {
@@ -29,6 +30,16 @@ const MessageModel = {
       .sort({ createdAt: 1 })
       .limit(limit)
       .toArray();
+  },
+
+  async deleteById(messageId) {
+    const db = getDb();
+    return await db.collection('messages').deleteOne({ _id: new ObjectId(messageId) });
+  },
+
+  async deleteByConversationId(conversationId) {
+    const db = getDb();
+    return await db.collection('messages').deleteMany({ conversationId });
   }
 };
 

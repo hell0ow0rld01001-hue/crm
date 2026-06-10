@@ -56,6 +56,10 @@
   <div class="nav-item" onclick="showPanel('logins',this)">
     <span class="nav-icon">🔑</span> Login History
   </div>
+  <div class="nav-item" onclick="showPanel('blacklist',this)">
+    <span class="nav-icon">🚫</span> Blacklist
+    <% if (kpi.blacklistCount > 0) { %><span class="badge-count red"><%= kpi.blacklistCount %></span><% } %>
+  </div>
 
   <!-- Sidebar footer -->
   <div class="sidebar-footer">
@@ -259,7 +263,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Plan</th><th>Expires</th><th>Revenue ($)</th><th>Joined</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Plan</th><th>Expires</th><th>Revenue ($)</th><th>Joined</th><th>Actions</th></tr></thead>
         <tbody>
           <% users.forEach((u,i) => {
                const rem = u.planExpiresAt ? Math.max(0, Math.ceil((new Date(u.planExpiresAt)-new Date())/(1000*60*60*24))) : null;
@@ -292,10 +296,16 @@
               </div>
             </td>
             <td style="color:var(--text-muted);font-size:.8rem;"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+            <td>
+              <div style="display:flex;gap:5px;">
+                <button class="save-btn" onclick="openNotes('<%= u._id %>', '<%= u.name %>')" title="یادداشت">📝</button>
+                <button class="save-btn" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#f87171;" onclick="quickBlacklist('<%= u.name %>')" title="مسدود کردن">🚫</button>
+              </div>
+            </td>
           </tr>
           <% }) %>
           <% if (!users.length) { %>
-          <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:36px;">No customers yet</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:36px;">No customers yet</td></tr>
           <% } %>
         </tbody>
       </table>
@@ -356,19 +366,33 @@
         </div>
         <% }) %>
       </div>
-      <div class="conv-messages">
-        <div class="messages-area" id="messages-area">
+      <div class="conv-messages" style="display:flex;flex-direction:column;">
+        <div id="conv-actions-bar" style="display:none;padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;background:rgba(239,68,68,0.03);">
+          <span id="conv-actions-name" style="font-size:.83rem;color:var(--text-muted);flex:1;"></span>
+          <button class="save-btn" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#f87171;font-size:.75rem;" onclick="deleteCrmConversation()">🗑 حذف کل مکالمه</button>
+        </div>
+        <div class="messages-area" id="messages-area" style="flex:1;overflow-y:auto;">
           <div class="empty-state"><div class="empty-icon">💬</div><div>Select a conversation</div></div>
         </div>
       </div>
     </div>
     <script>
       const convData = <%- JSON.stringify(conversations) %>;
+      let selectedConvId = null;
+
       function selectConv(i) {
         document.querySelectorAll('.conv-item').forEach(el=>el.classList.remove('selected'));
         const el=document.getElementById('conv-'+i);
         if(el) el.classList.add('selected');
-        const msgs=convData[i].messages;
+        const conv = convData[i];
+        selectedConvId = conv.userId;
+        const msgs=conv.messages;
+
+        const actBar = document.getElementById('conv-actions-bar');
+        const actName = document.getElementById('conv-actions-name');
+        if (actBar) { actBar.style.display='flex'; }
+        if (actName) actName.textContent = (msgs[0]?.userName || 'Unknown') + ' — ' + msgs.length + ' پیام';
+
         const area=document.getElementById('messages-area');
         area.innerHTML='';
         if(!msgs.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><div>No messages</div></div>';return;}
@@ -376,10 +400,37 @@
           const d=document.createElement('div');
           const isOther=m.role==='support'||m.userId!==m.conversationId;
           d.className=isOther?'msg-bubble msg-other':'msg-bubble msg-user';
-          d.innerHTML=`<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;">${m.userName}</div>${m.text}<div class="msg-meta">${new Date(m.createdAt).toLocaleString()}</div>`;
+          d.style.cssText='position:relative;';
+          d.innerHTML=`
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;">${m.userName}</div>
+            ${m.text}
+            <div class="msg-meta" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>${new Date(m.createdAt).toLocaleString()}</span>
+              <button onclick="deleteCrmMessage('${m._id}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:2px 7px;font-size:.65rem;cursor:pointer;margin-right:4px;">🗑</button>
+            </div>`;
           area.appendChild(d);
         });
         area.scrollTop=area.scrollHeight;
+      }
+
+      async function deleteCrmMessage(msgId) {
+        if (!confirm('این پیام حذف شود؟')) return;
+        const res = await fetch('/support/api/message/delete', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ messageId: msgId })
+        });
+        if (res.ok) { showToast('🗑 پیام حذف شد'); location.reload(); }
+        else showToast('✗ خطا در حذف', false);
+      }
+
+      async function deleteCrmConversation() {
+        if (!selectedConvId || !confirm('کل این مکالمه حذف شود؟')) return;
+        const res = await fetch('/support/api/conversation/delete', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ conversationId: selectedConvId })
+        });
+        if (res.ok) { showToast('🗑 مکالمه حذف شد'); setTimeout(()=>location.reload(), 800); }
+        else showToast('✗ خطا در حذف', false);
       }
     </script>
     <% } %>
@@ -521,7 +572,90 @@
     </div>
   </div>
 
+  <!-- ==================== BLACKLIST ==================== -->
+  <div class="panel" id="panel-blacklist">
+    <div class="section-title" style="justify-content:space-between;">
+      🚫 Blacklist Management (<%= blacklist.length %>)
+      <button class="btn-primary" style="font-size:.82rem;padding:8px 16px;" onclick="openModal('modal-blacklist')">+ Add to Blacklist</button>
+    </div>
+
+    <% if (!blacklist.length) { %>
+      <div style="text-align:center;color:var(--text-dim);padding:60px;">
+        <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
+        <div>هیچ کاربری در بلک‌لیست نیست</div>
+        <div style="font-size:.8rem;margin-top:8px;color:var(--text-dim);">کاربران بلک‌لیست شده قادر به ورود نخواهند بود</div>
+      </div>
+    <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>نام کاربر</th><th>دلیل</th><th>اضافه‌شده توسط</th><th>تاریخ</th><th>عملیات</th></tr></thead>
+        <tbody id="blacklist-tbody">
+          <% blacklist.forEach((item, i) => { %>
+          <tr id="bl-row-<%= item._id %>">
+            <td style="color:var(--text-dim);font-size:.78rem;"><%= i+1 %></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#f87171;flex-shrink:0;">
+                  🚫
+                </div>
+                <strong style="color:var(--red);"><%= item.userName %></strong>
+              </div>
+            </td>
+            <td style="color:var(--text-muted);font-size:.85rem;"><%= item.reason || '—' %></td>
+            <td style="color:var(--text-muted);font-size:.82rem;"><%= item.addedBy %></td>
+            <td style="color:var(--text-muted);font-size:.78rem;"><%= new Date(item.addedAt).toLocaleDateString('fa-IR') %></td>
+            <td>
+              <button class="save-btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;" onclick="removeFromBlacklist('<%= item._id %>')">
+                ✕ رفع مسدودی
+              </button>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <div style="margin-top:20px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:12px;">
+      <div style="font-size:.82rem;color:#f87171;font-weight:600;margin-bottom:6px;">⚠️ توجه</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">کاربران بلک‌لیست شده هنگام ورود پیام مسدودیت دریافت کرده و نمی‌توانند وارد سیستم شوند.</div>
+    </div>
+  </div>
+
 </div><!-- /main -->
+
+<!-- ==================== MODAL: BLACKLIST ==================== -->
+<div class="modal-overlay" id="modal-blacklist">
+  <div class="modal-box">
+    <div class="modal-title">🚫 افزودن به بلک‌لیست <span class="modal-close" onclick="closeModal('modal-blacklist')">✕</span></div>
+    <div class="form-row"><label>نام کاربر (دقیقاً مثل نام ثبت‌شده)</label>
+      <input class="form-input" id="bl-username" placeholder="مثلاً: علی محمدی" />
+    </div>
+    <div class="form-row"><label>دلیل (اختیاری)</label>
+      <input class="form-input" id="bl-reason" placeholder="تقلب، اسپم، ..." />
+    </div>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.8rem;color:#f87171;">
+      ⚠️ این کاربر دیگر نمی‌تواند وارد سیستم شود
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" style="background:linear-gradient(135deg,#ef4444,#dc2626);" onclick="submitBlacklist()">🚫 مسدود کردن</button>
+      <button class="btn-ghost" onclick="closeModal('modal-blacklist')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: CUSTOMER NOTES ==================== -->
+<div class="modal-overlay" id="modal-notes">
+  <div class="modal-box" style="width:440px;">
+    <div class="modal-title">📝 یادداشت مشتری — <span id="notes-user-name"></span> <span class="modal-close" onclick="closeModal('modal-notes')">✕</span></div>
+    <div id="notes-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;"></div>
+    <textarea class="form-input" id="notes-input" rows="3" placeholder="یادداشت جدید..." style="resize:vertical;"></textarea>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="submitNote()">+ ذخیره یادداشت</button>
+      <button class="btn-ghost" onclick="closeModal('modal-notes')">بستن</button>
+    </div>
+  </div>
+</div>
 
 <!-- ==================== TOAST ==================== -->
 <div class="toast" id="toast"></div>
@@ -626,6 +760,94 @@
     document.getElementById('panel-'+name).classList.add('active');
     if (el) el.classList.add('active');
     if (name==='sim') loadSims();
+  }
+
+  /* --- Blacklist --- */
+  async function submitBlacklist() {
+    const userName = document.getElementById('bl-username').value.trim();
+    const reason = document.getElementById('bl-reason').value.trim();
+    if (!userName) { showToast('✗ نام کاربر الزامی است', false); return; }
+    const res = await fetch('/crm/blacklist/add', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userName, reason })
+    });
+    if (res.ok) {
+      showToast('🚫 کاربر مسدود شد!');
+      closeModal('modal-blacklist');
+      setTimeout(() => location.reload(), 900);
+    } else {
+      const data = await res.json();
+      showToast('✗ ' + (data.error || 'خطا'), false);
+    }
+  }
+
+  async function removeFromBlacklist(blacklistId) {
+    if (!confirm('رفع مسدودیت این کاربر؟')) return;
+    const res = await fetch('/crm/blacklist/remove', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ blacklistId })
+    });
+    if (res.ok) {
+      showToast('✓ مسدودیت برداشته شد!');
+      const row = document.getElementById('bl-row-' + blacklistId);
+      if (row) row.remove();
+    } else showToast('✗ خطا', false);
+  }
+
+  function quickBlacklist(userName) {
+    document.getElementById('bl-username').value = userName;
+    document.getElementById('bl-reason').value = '';
+    openModal('modal-blacklist');
+    showPanel('blacklist', null);
+  }
+
+  /* --- Customer Notes --- */
+  let currentNotesUserId = null;
+  async function openNotes(userId, userName) {
+    currentNotesUserId = userId;
+    document.getElementById('notes-user-name').textContent = userName;
+    openModal('modal-notes');
+    await loadNotes(userId);
+  }
+
+  async function loadNotes(userId) {
+    const list = document.getElementById('notes-list');
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;padding:8px;">در حال بارگذاری...</div>';
+    try {
+      const res = await fetch('/crm/notes/' + userId);
+      const notes = await res.json();
+      if (!notes.length) {
+        list.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;padding:8px;text-align:center;">هنوز یادداشتی ندارد</div>';
+        return;
+      }
+      list.innerHTML = notes.map(n => `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+          <div style="font-size:.82rem;color:var(--text-primary);line-height:1.5;">${n.note}</div>
+          <div style="font-size:.7rem;color:var(--text-dim);margin-top:5px;">
+            ${n.addedBy} — ${new Date(n.createdAt).toLocaleDateString('fa-IR')}
+          </div>
+        </div>
+      `).join('');
+    } catch(e) {
+      list.innerHTML = '<div style="color:var(--red);font-size:.8rem;">خطا در بارگذاری</div>';
+    }
+  }
+
+  async function submitNote() {
+    const note = document.getElementById('notes-input').value.trim();
+    if (!note || !currentNotesUserId) { showToast('✗ یادداشت خالی است', false); return; }
+    const res = await fetch('/crm/notes/save', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentNotesUserId, note })
+    });
+    if (res.ok) {
+      showToast('✓ یادداشت ذخیره شد!');
+      document.getElementById('notes-input').value = '';
+      await loadNotes(currentNotesUserId);
+    } else showToast('✗ خطا', false);
   }
 
   /* --- Toast --- */

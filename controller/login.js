@@ -12,7 +12,7 @@ const login = async (req, res) => {
     const db = getDb();
     const users = await db.collection('users').find({}).toArray();
     let user = null;
-    
+
     for (const u of users) {
       const phoneMatch = await bcrypt.compare(phone, u.phone);
       if (phoneMatch) {
@@ -23,6 +23,20 @@ const login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ error: 'wrong credentials' });
+    }
+
+    // بررسی بلک‌لیست
+    const blacklisted = await db.collection('blacklist').findOne({
+      $or: [
+        { userName: user.name },
+        { phone: phone }
+      ]
+    });
+
+    if (blacklisted) {
+      return res.render('wrong-password', {
+        message: 'دسترسی شما به این سیستم مسدود شده است. با مدیریت تماس بگیرید.'
+      });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);

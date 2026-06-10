@@ -5,7 +5,9 @@ const {
   updateRevenue,
   createTicket, updateTicketStatus,
   reportNetworkIssue, resolveNetworkIssue,
-  upsertSim, getSimCards
+  upsertSim, getSimCards,
+  addToBlacklist, removeFromBlacklist, getBlacklist,
+  saveNote, getNotes
 } = require('../controller/crm');
 
 // داشبورد اصلی
@@ -25,5 +27,14 @@ router.post('/crm/network/resolve', requirePremium, resolveNetworkIssue);
 // سیم‌کارت
 router.post('/crm/sim/upsert', requirePremium, upsertSim);
 router.get('/crm/sim/list', requirePremium, getSimCards);
+
+// بلک‌لیست
+router.post('/crm/blacklist/add', requirePremium, addToBlacklist);
+router.post('/crm/blacklist/remove', requirePremium, removeFromBlacklist);
+router.get('/crm/blacklist/list', requirePremium, getBlacklist);
+
+// یادداشت مشتری
+router.post('/crm/notes/save', requirePremium, saveNote);
+router.get('/crm/notes/:userId', requirePremium, getNotes);
 
 module.exports = router;

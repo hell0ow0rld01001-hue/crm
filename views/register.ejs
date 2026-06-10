@@ -1,5 +1,34 @@
 <%- include('./includes/register/header.ejs') -%>
 
+<style>
+.field-error {
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 5px;
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+.field-error.show { display: flex; }
+.form-group input.error-border { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+.form-group input.ok-border { border-color: #4ade80 !important; }
+.password-strength {
+  height: 3px;
+  border-radius: 4px;
+  margin-top: 6px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  display: none;
+}
+.password-strength.show { display: block; }
+.strength-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s, background 0.3s;
+}
+</style>
+
 <div class="auth-glow"></div>
 <div class="auth-glow-2"></div>
 
@@ -10,29 +39,136 @@
   <div class="auth-title">Create Account</div>
   <div class="auth-sub">Join the MCI CRM platform today</div>
 
-  <form action="/check/register" method="post" class="auth-form">
+  <form action="/check/register" method="post" class="auth-form" id="regForm" onsubmit="return validateForm()">
     <div class="form-group">
       <label>Full Name</label>
-      <input type="text" name="name" placeholder="Your name" required />
+      <input type="text" name="name" id="inp-name" placeholder="Your name" required />
+      <div class="field-error" id="err-name">⚠ نام نمی‌تواند خالی باشد</div>
     </div>
     <div class="form-group">
-      <label>Phone Number</label>
-      <input type="number" name="phone" placeholder="09xxxxxxxxx" required />
+      <label>Phone Number (شماره موبایل)</label>
+      <input type="text" name="phone" id="inp-phone" placeholder="09xxxxxxxxx" required maxlength="11" oninput="validatePhone(this)" />
+      <div class="field-error" id="err-phone">⚠ شماره موبایل باید دقیقاً ۱۱ رقم باشد</div>
     </div>
     <div class="form-group">
-      <label>Password</label>
-      <input type="password" name="password" placeholder="••••••••" required />
+      <label>Password (رمز عبور)</label>
+      <input type="password" name="password" id="inp-password" placeholder="••••••••" required oninput="validatePassword(this)" />
+      <div class="password-strength" id="strength-bar-wrap">
+        <div class="strength-bar" id="strength-bar"></div>
+      </div>
+      <div class="field-error" id="err-password">⚠ رمز باید حداقل ۸ کاراکتر و شامل یک حرف بزرگ باشد</div>
     </div>
     <div class="form-group">
-      <label>Confirm Password</label>
-      <input type="password" name="confirmPassword" placeholder="••••••••" required />
+      <label>Confirm Password (تکرار رمز)</label>
+      <input type="password" name="confirmPassword" id="inp-confirm" placeholder="••••••••" required oninput="validateConfirm(this)" />
+      <div class="field-error" id="err-confirm">⚠ رمزها با هم مطابقت ندارند</div>
     </div>
-    <button type="submit" class="auth-submit">Create Account →</button>
+    <button type="submit" class="auth-submit" id="submitBtn">Create Account →</button>
   </form>
 
   <div class="auth-footer">
     Already have an account? <a href="/login">Sign in</a>
   </div>
 </div>
+
+<script>
+  function validatePhone(input) {
+    const val = input.value.replace(/\D/g, '');
+    input.value = val;
+    const err = document.getElementById('err-phone');
+    if (val.length > 0 && val.length !== 11) {
+      input.classList.add('error-border');
+      input.classList.remove('ok-border');
+      err.classList.add('show');
+    } else if (val.length === 11) {
+      input.classList.remove('error-border');
+      input.classList.add('ok-border');
+      err.classList.remove('show');
+    } else {
+      input.classList.remove('error-border', 'ok-border');
+      err.classList.remove('show');
+    }
+  }
+
+  function validatePassword(input) {
+    const val = input.value;
+    const err = document.getElementById('err-password');
+    const barWrap = document.getElementById('strength-bar-wrap');
+    const bar = document.getElementById('strength-bar');
+    barWrap.classList.add('show');
+
+    const hasLen = val.length >= 8;
+    const hasUpper = /[A-Z]/.test(val);
+    const hasNum = /[0-9]/.test(val);
+    const hasSpec = /[^a-zA-Z0-9]/.test(val);
+
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (hasLen) score++;
+    if (hasUpper) score++;
+    if (hasNum) score++;
+    if (hasSpec) score++;
+
+    const colors = ['#ef4444','#f97316','#eab308','#4ade80','#22c55e'];
+    const widths = ['20%','40%','60%','80%','100%'];
+    bar.style.width = widths[score-1] || '10%';
+    bar.style.background = colors[score-1] || '#ef4444';
+
+    if (val.length > 0 && (!hasLen || !hasUpper)) {
+      input.classList.add('error-border');
+      input.classList.remove('ok-border');
+      err.classList.add('show');
+    } else if (hasLen && hasUpper) {
+      input.classList.remove('error-border');
+      input.classList.add('ok-border');
+      err.classList.remove('show');
+    } else {
+      input.classList.remove('error-border', 'ok-border');
+      err.classList.remove('show');
+    }
+    validateConfirm(document.getElementById('inp-confirm'));
+  }
+
+  function validateConfirm(input) {
+    const pass = document.getElementById('inp-password').value;
+    const err = document.getElementById('err-confirm');
+    if (input.value.length > 0 && input.value !== pass) {
+      input.classList.add('error-border');
+      input.classList.remove('ok-border');
+      err.classList.add('show');
+    } else if (input.value.length > 0 && input.value === pass) {
+      input.classList.remove('error-border');
+      input.classList.add('ok-border');
+      err.classList.remove('show');
+    } else {
+      input.classList.remove('error-border', 'ok-border');
+      err.classList.remove('show');
+    }
+  }
+
+  function validateForm() {
+    const phone = document.getElementById('inp-phone').value;
+    const pass = document.getElementById('inp-password').value;
+    const confirm = document.getElementById('inp-confirm').value;
+    let ok = true;
+
+    if (phone.length !== 11) {
+      document.getElementById('err-phone').classList.add('show');
+      document.getElementById('inp-phone').classList.add('error-border');
+      ok = false;
+    }
+    if (pass.length < 8 || !/[A-Z]/.test(pass)) {
+      document.getElementById('err-password').classList.add('show');
+      document.getElementById('inp-password').classList.add('error-border');
+      ok = false;
+    }
+    if (pass !== confirm) {
+      document.getElementById('err-confirm').classList.add('show');
+      document.getElementById('inp-confirm').classList.add('error-border');
+      ok = false;
+    }
+    return ok;
+  }
+</script>
 
 <%- include('./includes/register/footer.ejs') -%>

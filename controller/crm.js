@@ -41,8 +41,11 @@ const crmDashboard = async (req, res) => {
   // مشکلات شبکه
   const networkIssues = await db.collection('network_issues').find({}).sort({ reportedAt: -1 }).limit(50).toArray();
 
-  // خریدهای پلن (برای تجدید)
+  // خریدهای پلن
   const planPurchases = await db.collection('plan_purchases').find({}).sort({ purchasedAt: -1 }).limit(50).toArray();
+
+  // بلک‌لیست
+  const blacklist = await db.collection('blacklist').find({}).sort({ addedAt: -1 }).toArray();
 
   // ---- محاسبه KPIها ----
   const now = new Date();
@@ -72,6 +75,7 @@ const crmDashboard = async (req, res) => {
     networkIssues,
     planPurchases,
     expiringUsers,
+    blacklist,
     kpi: {
       totalUsers: users.length,
       activeUsers: activeUsers.length,
@@ -84,7 +88,8 @@ const crmDashboard = async (req, res) => {
       openTickets,
       resolvedTickets,
       openNetworkIssues,
-      expiringCount: expiringUsers.length
+      expiringCount: expiringUsers.length,
+      blacklistCount: blacklist.length
     }
   });
 };
@@ -197,10 +202,85 @@ const getSimCards = async (req, res) => {
   }
 };
 
+// =================== بلک‌لیست ===================
+
+const addToBlacklist = async (req, res) => {
+  const { userName, reason } = req.body;
+  if (!userName || !userName.trim()) return res.status(400).json({ error: 'userName required' });
+  try {
+    const db = getDb();
+    const existing = await db.collection('blacklist').findOne({ userName: userName.trim() });
+    if (existing) return res.status(409).json({ error: 'این کاربر قبلاً بلک‌لیست شده' });
+    await db.collection('blacklist').insertOne({
+      userName: userName.trim(),
+      reason: reason || 'بدون دلیل',
+      addedBy: req.session.user.name,
+      addedAt: new Date()
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+};
+
+const removeFromBlacklist = async (req, res) => {
+  const { blacklistId } = req.body;
+  if (!blacklistId) return res.status(400).json({ error: 'blacklistId required' });
+  try {
+    const db = getDb();
+    await db.collection('blacklist').deleteOne({ _id: new ObjectId(blacklistId) });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+};
+
+const getBlacklist = async (req, res) => {
+  try {
+    const db = getDb();
+    const list = await db.collection('blacklist').find({}).sort({ addedAt: -1 }).toArray();
+    res.json(list);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+};
+
+// =================== یادداشت مشتری ===================
+
+const saveNote = async (req, res) => {
+  const { userId, note } = req.body;
+  if (!userId || !note) return res.status(400).json({ error: 'userId and note required' });
+  try {
+    const db = getDb();
+    await db.collection('customer_notes').insertOne({
+      userId,
+      note,
+      addedBy: req.session.user.name,
+      createdAt: new Date()
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+};
+
+const getNotes = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const db = getDb();
+    const notes = await db.collection('customer_notes').find({ userId }).sort({ createdAt: -1 }).toArray();
+    res.json(notes);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+};
+
 module.exports = {
   crmDashboard, requirePremium,
   updateRevenue,
   createTicket, updateTicketStatus,
   reportNetworkIssue, resolveNetworkIssue,
-  upsertSim, getSimCards
+  upsertSim, getSimCards,
+  addToBlacklist, removeFromBlacklist, getBlacklist,
+  saveNote, getNotes
 };

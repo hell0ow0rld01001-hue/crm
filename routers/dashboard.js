@@ -8,7 +8,7 @@ router.get("/dashboard", async (req, res) => {
 
   let userRole = req.session.user.role || 'user';
   let remainingDays = 0;
-  let remainingPercent = 99;
+  let remainingPercent = 0;
   let planExpiresAt = null;
   let planDurationDays = 30;
 
@@ -19,7 +19,9 @@ router.get("/dashboard", async (req, res) => {
       userRole = user.role;
       req.session.user.role = userRole;
 
-      // محاسبه روزهای باقیمانده پلن
+      // ریدایرکت support به پنل اختصاصی
+      if (userRole === 'support') return res.redirect('/support');
+
       if (user.planExpiresAt) {
         planExpiresAt = new Date(user.planExpiresAt);
         planDurationDays = user.planDurationDays || 30;
